@@ -1,0 +1,53 @@
+version: '3.5'
+
+services:
+  my-project-2:
+    image: ${REGISTRY}project.tjmt.jus.br
+    build:
+      args:
+        - MAVEN_REGISTRY=http://uk.maven.org/maven2
+        - SKIP_TEST=true
+      context: .
+      # target: build
+      dockerfile: Dockerfile
+    ports:
+      - 8080:8080
+      - 5005:5005
+    restart: on-failure
+    depends_on:
+      - sistema-database
+    # command: ["while ! nc -G 1 -z sistema-database 5432; do sleep 1; echo waiting; done"]
+    environment:
+      JAVA_TOOL_OPTIONS: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005,quiet=y
+      DB_DRIVER: org.postgresql.Driver
+      DB_DIALECT: org.hibernate.dialect.PostgreSQLDialect
+      DB_PROTOCOL: postgresql
+      DB_HOST: sistema-database
+      DB_PORT: 5432
+      DB_DATABASE: dbtest
+      DB_USERNAME: sa
+      DB_PASSWORD: P@ssw0rd
+    labels:
+      kompose.service.expose: "project.tjmt.jus.br"
+
+  sistema-database:
+    build:
+      context: db/.
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_USER: sa
+      POSTGRES_PASSWORD: P@ssw0rd
+      POSTGRES_DB: dbtest
+    volumes:
+      - sistema-database:/var/lib/postgresql/data
+    labels:
+      kompose.volume.size: 1Gi
+      kompose.service.type: nodeport
+    deploy:
+      replicas: 1
+      placement:
+        constraints:
+          - node.labels.server == database
+volumes:
+  sistema-database:

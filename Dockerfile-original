@@ -1,0 +1,61 @@
+
+# FROM openjdk:8-jdk-alpine
+# VOLUME /tmp
+# ARG JAVA_OPTS
+# ENV JAVA_OPTS=$JAVA_OPTS
+# ADD target/my-project-2-0.0.1-SNAPSHOT.jar my-project-2.jar
+# EXPOSE 3000
+# #ENTRYPOINT exec java $JAVA_OPTS -jar my-project-2.jar
+# # For Spring-Boot project, use the entrypoint below to reduce Tomcat startup time.
+# ENTRYPOINT exec java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar my-project-2.jar
+
+
+
+
+
+
+# ETAPA 1
+# ARGUMENTOS OPCIONAIS
+
+# ETAPA 2
+# COPIA DOS ARQUIVOS ESTRITRAMENTE NECESSARIOS PARA BAIXAR OS PACOTES (OBJETIVO: MANTER EM CACHE DO DOCKER)
+
+# ETAPA 3
+# COPIA DOS RESTANTE DOS ARQUIVOS (CODIGO, ETC) PARA COMPILAR O PROJETO (GERAR O BINÁRIO - DLL/JAR)
+
+
+
+
+FROM maven:3.5.4-jdk-8 as build
+
+ARG RUN_TEST=false
+
+ARG JAVA_OPTS
+ENV JAVA_OPTS=$JAVA_OPTS
+
+WORKDIR /usr/src/java-code
+
+COPY pom.xml /usr/src/java-code/
+# RUN mvn install:install -fn
+# RUN mvn install -fn && rm -rf target
+# RUN mvn package -Dmaven.test.skip=true -Dspring-boot.repackage.skip=true -Dmaven.main.skip=true && rm -rf target
+RUN mvn package -Dmaven.test.skip=true -Dspring-boot.repackage.skip=true
+
+
+COPY . /usr/src/java-code/
+# RUN mvn package -DskipTests
+RUN if [ "${RUN_TEST}"="false" ]; then SKIP_TEST=true; else SKIP_TEST=false; fi && \
+	mvn package -Dmaven.test.skip.exec=$SKIP_TEST 
+
+
+WORKDIR /usr/src/java-app
+RUN cp /usr/src/java-code/target/*.jar ./app.jar
+
+
+FROM openjdk:8-jre as final
+WORKDIR /app
+COPY --from=builder /usr/src/java-app/app.jar /app
+# COPY --from=builder /usr/src/java-app/wait-for-it.sh /app
+# ADD https://raw.githubusercontent.com/eficode/wait-for/master/wait-for ./wait-for.sh
+EXPOSE 8080
+ENTRYPOINT exec java $JAVA_OPTS -Djava.security.egd=file:/dev/./urandom -jar app.jar

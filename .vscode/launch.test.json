@@ -1,0 +1,30 @@
+{
+    "run": {
+        "default": "",
+        "items": [
+            {
+                "name": "my-project-2",
+                "projectName": "my-project-2",
+                "workingDirectory": "d:\\WORK\\code\\testes\\java\\spring-boot\\my-project-2",
+                "args": [],
+                "vmargs": [],
+                "env": {},
+                "preLaunchTask": ""
+            }
+        ]
+    },
+    "debug": {
+        "default": "",
+        "items": [
+            {
+                "name": "my-project-2",
+                "projectName": "my-project-2",
+                "workingDirectory": "d:\\WORK\\code\\testes\\java\\spring-boot\\my-project-2",
+                "args": [],
+                "vmargs": [],
+                "env": {},
+                "preLaunchTask": ""
+            }
+        ]
+    }
+}
